@@ -1,0 +1,22 @@
+{
+  "name": "asterisk-ari-sample",
+  "version": "1.0.0",
+  "description": "Asteris Rest Interface - Sample",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://savagz@github.com/savagz/asterisk-ari-sample.git"
+  },
+  "author": "Samuel Vargas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/savagz/asterisk-ari-sample/issues"
+  },
+  "homepage": "https://github.com/savagz/asterisk-ari-sample#readme",
+  "dependencies": {
+    "ari-client": "^2.2.0"
+  }
+}
