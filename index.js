@@ -1,7 +1,7 @@
 'use strict';
 
 var ari = require('ari-client');
-ari.connect('http://localhost:8088', 'audarari', 'zaq1xsw2cde3', clientLoaded);
+ari.connect('http://localhost:8088', 'adminari', 'q1w2e3r4t5y6', clientLoaded);
 
 /** ARI Client Function */
 function clientLoaded(err, client) {
@@ -10,65 +10,79 @@ function clientLoaded(err, client) {
     }
 
     // Listener DeviceState 
-    client.on('DeviceStateChanged', function (event, device_state) {
-        console.log(`DeviceStateChanged : `, device_state);
+    client.on('DeviceStateChanged', (event, device_state) => {
+        console.log(`· DeviceStateChanged : `, device_state);
     });
 
     // Listener ChannelHangup
-    client.on('ChannelHangupRequest', function (event, channel) {
-        console.log(`ChannelHangupRequest : ${channel.name} - ${channel.state}`);
+    client.on('ChannelHangupRequest', (event, channel) => {
+        console.log(`· ChannelHangupRequest : ${channel.name} - ${channel.state}`);
     });
 
-    /** Device States */
-    client.deviceStates.list(
-        function (err, devicestates) {
-            console.log(`Device : `, devicestates);
-        }
-    );
+    /** Listener Start Stasis */
+    client.on('StasisStart', (event, incoming) => {
+        console.log(`- Stasis Start for Channel ID : ${incoming.id}`);
 
-    /** Start Stasis */
-    client.on('StasisStart', function (event, incoming) {
-        console.log("StasisStart");
-
+        // Change DeviceState
         var opts = {
             deviceName: 'Stasis:VoxApp',
             deviceState: 'BUSY'
         };
-        client.deviceStates.update(opts, function (err) { });
+        client.deviceStates.update(opts, (err) => { });
 
-        incoming.answer(function (err, channel) {
-            console.log("Incoming : " + incoming.id);
-            play(incoming, 'sound:demo-congrats', function (err) {
-                incoming.hangup(function (err) {
-                    console.log("Hangup Channel : " + incoming.id);
+        // Send a Playback
+        incoming.answer((err, channel) => {
+            console.log(`· Answered Channel ID : ${incoming.id}`);
+            // Device States
+            client.deviceStates.list(
+                (err, devicestates) => {
+                    devicestates.forEach((device) => {
+                        console.log(` - Device: ${device.name} - ${device.state}`);
+                    });
+                }
+            );
+            // Playback
+            play(incoming, 'sound:demo-congrats', (err) => {
+                // Playback Completed - Send a Hangup Channel
+                incoming.hangup((err) => {
+                    console.log(`· Hangup Channel ID : ${incoming.id}`);
                 });
             });
         });
 
         /** List Channels */
-        client.channels.list(function (err, channels) {
+        client.channels.list((err, channels) => {
             if (!channels.length) {
                 console.log(' + No channels currently :-(');
             } else {
                 console.log(' :: Current channels:');
-                channels.forEach(function (channel) {
-                    console.log("  - Channel: " + channel.name);
+                channels.forEach((channel) => {
+                    console.log(` - Channel: ${channel.name}`);
                 });
             }
         });
     });
 
-    /** End Stasis */
-    client.on('StasisEnd', function (event, incoming) {
-        console.log("StasisEnd");
+    /** Listener End Stasis */
+    client.on('StasisEnd', (event, incoming) => {
+        console.log(`Stasis End ID ${incoming.id} ... Update Device State`);
         var opts = {
             deviceName: 'Stasis:VoxApp',
             deviceState: 'NOT_INUSE'
         };
-        client.deviceStates.update(opts, function (err) { });
+        client.deviceStates.update(opts, (err) => {
+            // Device States
+            client.deviceStates.list(
+                (err, devicestates) => {
+                    devicestates.forEach((device) => {
+                        console.log(` - Device: ${device.name} - ${device.state}`);
+                    });
+                }
+            );
+        });
     });
 
-    /** Playback */
+    /** Function for Playback a Sound */
     function play(channel, sound, callback) {
         var playback = client.Playback();
         playback.once('PlaybackFinished',
@@ -77,7 +91,7 @@ function clientLoaded(err, client) {
                     callback(null);
                 }
             });
-        channel.play({ media: sound }, playback, function (err, playback) { });
+        channel.play({ media: sound }, playback, (err, playback) => { });
     }
 
     client.start('voxapp');
